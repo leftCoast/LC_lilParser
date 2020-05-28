@@ -15,11 +15,11 @@ enum commands { noCommand, command1, command2 }; // This gives you two commands 
 All these names you can change, it doesn't care what you call things.
 
 **3 : Setting up the parser.** Typically this is done in your setup() function. This is where you link what your going to type to your command. For example..
-
+```
 ourParser.addCmd(command1,"reset"); // command1 will now be returned when the user types reset.
 ourParser.addCmd(command2,"run");   // command2 will now be returned when the user types run.
 ourParser.addCmd(command2,"y");   // command2 will now be returned when the user types y. (Synonyms are ok)
-
+```
 **4 : Run the parser.** Typically this is what goes on in your loop() function. Every time through loop(), check if there's a new character ready to read. If so, pass that into the parser and run its output through a switch statement. Here is a simple example..
 
 void loop(void) {
