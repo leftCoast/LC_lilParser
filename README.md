@@ -21,7 +21,7 @@ ourParser.addCmd(command2,"run");   // command2 will now be returned when the us
 ourParser.addCmd(command2,"y");   // command2 will now be returned when the user types y. (Synonyms are ok)
 ```
 **4 : Run the parser.** Typically this is what goes on in your loop() function. Every time through loop(), check if there's a new character ready to read. If so, pass that into the parser and run its output through a switch statement. Here is a simple example..
-
+```
 void loop(void) {
 
    char  inChar;
@@ -39,9 +39,9 @@ void loop(void) {
       }
    }
 }
-
+```
 **5 : Handling commands.** Handlers are the functions that are called to execute the commands. They can be simple commands that are just triggers for actions. Or they can contain parameters to add more info.Here is an example of a command that creates a new folder on an SD drive. This is so you can see how to deal with a simple parameter string.
-
+```
 void makeDirectory(void) {
 
    char* charBuff;                                 // A pointer for the folder name string.
@@ -57,7 +57,7 @@ void makeDirectory(void) {
       }
    }
 }
-
+```
 numParams() actually returns the number of parameters that the user typed in. If you are expecting more than one, you may want to use the for setting up a for loop for decoding parameters? Up to you.
 getParamBuff() Each time getParamBuff() is called, it allocates a buffer for the NEXT parameter string the user typed and returns it. This means YOU MUST FREE THIS BUFFER WHEN YOUR DONE WITH IT. See this being done in the code above.
 
