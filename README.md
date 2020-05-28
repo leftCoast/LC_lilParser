@@ -9,9 +9,9 @@ Need to control a program from a command line? This should take most of the drud
 **1 : Create your parser.** ```lilParser ourParser; // Typically you create this as a global.```
 
 **2 : Define your commands.** Set up an enum to list the commands you would like to use. Make sure the first command is noCommand or something similar. Why is this? Because, as the parser is running through inputted text, it returns 0 for "Not done parsing yet". It passes back -1 for "I can't parse this!" and all other numbers are valid commands. So to lessen confusion your first (0) command should be something like "noCommand" or "stillParsing". Your enum should looks something like this..
-
+```
 enum commands { noCommand, command1, command2 }; // This gives you two commands command1 & command2.
-
+```
 All these names you can change, it doesn't care what you call things.
 
 **3 : Setting up the parser.** Typically this is done in your setup() function. This is where you link what your going to type to your command. For example..
