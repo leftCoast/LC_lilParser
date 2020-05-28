@@ -3,8 +3,8 @@ A command line parser.
 
 Need to control a program from a command line? This should take most of the drudgery out of it.
 
-**Depeneds on**
-LC_baseTools
+**Depeneds on**  
+[LC_baseTools](https://github.com/leftCoast/LC_baseTools)
 
 **1 : Create your parser.** lilParser ourParser; // Typically you create this as a global.
 
