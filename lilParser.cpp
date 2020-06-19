@@ -36,37 +36,38 @@ int lilParser::addChar(char inChar) {
 
   cmdTemplate*  trace;
 
-  if (sawEOL) {                           // Means that LAST time we saw EOL.
-    reset();                              // Meaning, we are at a fresh beginning!
+  if (sawEOL) {                           		// Means that LAST time we saw EOL.
+    reset();                              		// Meaning, we are at a fresh beginning!
   }
-  if (!firstLetter) {                     // Not seen first letter.
-    if (isspace(inChar)) {                // White space?
-      return 0;                           // Burn off leading white space.
-    } else {                              // Oh, printable?
-      firstLetter = true;                 // Then we HAVE seen first letter
+  if (!firstLetter) {                     		// Not seen first letter.
+    if (isspace(inChar)) {                		// White space?
+      return 0;                           		// Burn off leading white space.
+    } else {                              		// Oh, printable?
+      firstLetter = true;                 		// Then we HAVE seen first letter
     }
   }
-  if (inChar == EOL) {                    // Ah! The end of the line!
-    sawEOL = true;                        // Well, it is true. Its right there.
-    trace = (cmdTemplate*)theList;        // Setup to see if any cmds are still valid..
-    while (trace != NULL) {               // Start looping.
-      if (trace->validCmd()) {            // Find the first cmd that's still valid.
-        currentCmd = trace;               // Save off who it is.
-        trace->endParse();                // Tell the valid one, "We're done here."
-        return trace->cmdNumber();        // And return its command number.
+  if (inChar == EOL) {                    		// Ah! The end of the line!
+    sawEOL = true;                        		// Well, it is true. Its right there.
+    trace = (cmdTemplate*)theList;        		// Setup to see if any cmds are still valid..
+    while (trace != NULL) {               		// Start looping.
+      if (trace->validCmd()) {            		// Find the first cmd that's still valid.
+        currentCmd = trace;               		// Save off who it is.
+        trace->endParse();                		// Tell the valid one, "We're done here."
+        return trace->cmdNumber();        		// And return its command number.
       }
-      trace = (cmdTemplate*)trace->next;  // We're still here? Check the next cmd.
+      trace = (cmdTemplate*)trace->getNext();	// We're still here? Check the next cmd.
+      
     }
-    return -1;                            // Saw EOL and no one took the bait? Bad inputted command.
-  } else {                                // Not seen EOL..
-    trace = (cmdTemplate*)theList;        // Setup to see if any cmds are still parsing..
-    while (trace != NULL) {               // Start looping.
-      if (trace->parsing()) {             // Are you still parsing?
-        trace->addChar(inChar);           // Parse this big boy!
+    return -1;                            		// Saw EOL and no one took the bait? Bad inputted command.
+  } else {                                		// Not seen EOL..
+    trace = (cmdTemplate*)theList;        		// Setup to see if any cmds are still parsing..
+    while (trace != NULL) {               		// Start looping.
+      if (trace->parsing()) {             		// Are you still parsing?
+        trace->addChar(inChar);           		// Parse this big boy!
       }
-      trace = (cmdTemplate*)trace->next;  // Off to the next cmd.
+      trace = (cmdTemplate*)trace->getNext();	// Off to the next cmd.
     }
-    return 0;                             // Whatever, until EOL we're still parsin'
+    return 0;                             		// Whatever, until EOL we're still parsin'
   }
 }
 
@@ -159,15 +160,15 @@ void lilParser::reset(void) {
 
   cmdTemplate*  trace;
 
-  currentCmd = NULL;                    // Deselect everyone.
-  firstLetter = false;                  // Not seen a first letter.
-  sawEOL = false;                       // Not seen the EOL yet, either.
-  paramIndex = 0;                       // Ready for the next reading.
-  paramBuff[paramIndex] = '\0';         // Cleared!
-  trace = (cmdTemplate*)theList;        // Setup to reset all the cmds.
-  while (trace != NULL) {               // Start looping.
-    trace->reset();                     // trace must be non NULL to get here so OK to call.
-    trace = (cmdTemplate*)trace->next;  // Move to the next cmd.
+  currentCmd = NULL;                    		// Deselect everyone.
+  firstLetter = false;                  		// Not seen a first letter.
+  sawEOL = false;                       		// Not seen the EOL yet, either.
+  paramIndex = 0;                       		// Ready for the next reading.
+  paramBuff[paramIndex] = '\0';         		// Cleared!
+  trace = (cmdTemplate*)theList;        		// Setup to reset all the cmds.
+  while (trace != NULL) {               		// Start looping.
+    trace->reset();                     		// trace must be non NULL to get here so OK to call.
+    trace = (cmdTemplate*)trace->getNext();	// Move to the next cmd.
   }
 }
 
