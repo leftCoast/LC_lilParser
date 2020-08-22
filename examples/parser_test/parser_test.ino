@@ -1,5 +1,3 @@
-
-
 /************************************************************************************
 *************************************************************************************
                                     5/11/2020 middle of pandemic.
@@ -12,12 +10,13 @@ cd    - Change directory,
 ls    - List working directory.
 mkdr  - Make new directory.
 
-In order to comile this you will need, fro the Left Coast library two folders :
+In order to run this you will need, along with this library : LC_baseTools
+LC_baseTools can be found in in the Arduino library manager.
 
-LC_baseTools
-LC_Parser
+Or here : https://github.com/leftCoast/LC_baseTools
 
-And hardware with an SD drive. You will need the pin number of your SD's chip select.
+
+And, of course, hardware with an SD drive. You will need the pin number of your SD's chip select.
 Other than that? 
 
 Should work. I hope.
@@ -29,13 +28,13 @@ Should work. I hope.
 #include <SD.h>
 #include "lilParser.h"
 
-#define SD_CS        4
-#define PATH_CHARS   255
+#define SD_CS        4     // SD chip select pin number. Change to suit your setup.
+#define PATH_CHARS   255   // Could be less, depending on how deep into the SD drive you look.
 
  
-enum commands {   noCommand,
-                  printWD,
-                  changeDir,
+enum commands {   noCommand,  // ALWAYS start with noCommand. Or something simlar.
+                  printWD,    // The rest is up to you. help would be a good one. Have it list
+                  changeDir,  // What the other commands are, how they work and what they do.
                   listDir,
                   makeDir
                   };          // Our list of commands.
@@ -46,7 +45,7 @@ char        wd[PATH_CHARS];   // Allocate a space for the working directory.
 
 void setup() {
 
-   strcpy(wd,"/");                     // Initialize the directory at root.
+   strcpy(wd,"/");                     // Initialize the working directory at root.
    
    if (!SD.begin(SD_CS)) {             // If we can not initialze a SD drive.
       Serial.println("No SD Drive!");  // Tell the user.
@@ -60,12 +59,46 @@ void setup() {
 }
 
 
+// Your loop where it parses out all your typings.
+void loop(void) {
+
+   char  inChar;
+   int   command;
+   
+   if (Serial.available()) {                                // If serial has some data..
+      inChar = Serial.read();                               // Read out a charactor.
+      Serial.print(inChar);                                 // If using development machine, echo the charactor.
+      command = ourParser.addChar(inChar);                  // Try parsing what we have.
+      switch (command) {                                    // Check the results.
+         case noCommand : break;                            // Nothing to report, move along.
+         case printWD   : Serial.println(wd);      break;   // Easy peasy! Just print wd out.
+         case listDir   : listDirectory();         break;   // Print out a listing of the working directory.
+         case makeDir   : makeDirectory();         break;   // See if we can create a dirrectory in the working directory.
+         case changeDir : changeDirectory();       break;   // Try changing directorys
+         default        : Serial.println("What?"); break;   // No idea. Try again?
+      }
+   }
+}
+
+
+
+/************************************************************************************
+*************************************************************************************
+
+                     Now the list of command handlers you call from
+                     your main loop() when commands are parsed.   
+                                        
+*************************************************************************************
+*************************************************************************************/
+
+
+
 // [ls] Lists all the files in the working direcotory. 
 void listDirectory(void) {
 
   File  dir;                                                      // File handle used for the current directory.
   File  entry;                                                    // File handle used for the different entries of the current directory.
-  bool  done;                                                     // A boolean used to track wehn to stop all this nonsense.
+  bool  done;                                                     // A boolean used to track when to stop all this nonsense.
 
   dir = SD.open(wd);                                              // Try opening the working directory.
   if (dir) {                                                      // If we were able to open the working directory..
@@ -92,7 +125,7 @@ void listDirectory(void) {
 }
 
 
-// [mkdir] Crate a new directory in the working directory using typed in parameter.
+// [mkdir] Create a new directory in the working directory using typed in parameter.
 void makeDirectory(void) {
 
    char* charBuff;                                 // A pointer for the folder name string.
@@ -162,26 +195,4 @@ void changeDirectory(void) {
       }
       free(charBuff);                                 // Dump the parameter buffer.
    }   
-}
-
-
-// Your loop where it parses out all your typings.
-void loop(void) {
-
-   char  inChar;
-   int   command;
-   
-   if (Serial.available()) {                                // If serial has some data..
-      inChar = Serial.read();                               // Read out a charactor.
-      Serial.print(inChar);                                 // If using development machine, echo the charactor.
-      command = ourParser.addChar(inChar);                  // Try parsing what we have.
-      switch (command) {                                    // Check the results.
-         case noCommand : break;                            // Nothing to report, move along.
-         case printWD   : Serial.println(wd);      break;   // Easy peasy! Just print wd out.
-         case listDir   : listDirectory();         break;   // Print out a listing of the working directory.
-         case makeDir   : makeDirectory();         break;   // See if we can create a dirrectory in the working directory.
-         case changeDir : changeDirectory();       break;   // Try changing directorys
-         default        : Serial.println("What?"); break;   // No idea. Try again?
-      }
-   }
 }
