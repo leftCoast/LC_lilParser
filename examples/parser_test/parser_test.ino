@@ -16,8 +16,8 @@ LC_baseTools can be found in in the Arduino library manager.
 Or here : https://github.com/leftCoast/LC_baseTools
 
 
-And, of course, hardware with an SD drive. You will need the pin number of your SD's chip select.
-Other than that? 
+And, of course, hardware with an SD drive. You will need the pin number of your SD's
+chip select. Other than that? 
 
 Should work. I hope.
 
@@ -143,7 +143,8 @@ void makeDirectory(void) {
 }
 
 
-// [cd] This one's a bit of a pain! Too many special cases. And bug patches! Change the working directory.
+// [cd] This one's a bit of a pain. Too many special cases and bug patches. Change the
+//  working directory.
 void changeDirectory(void) {
 
    char* charBuff;                                    // A pointer for the folder name string.
