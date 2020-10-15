@@ -58,7 +58,7 @@ void makeDirectory(void) {
    }
 }
 ```
-numParams() actually returns the number of parameters that the user typed in. If you are expecting more than one, you may want to use the for setting up a for loop for decoding parameters? Up to you.
+numParams() actually returns the number of parameters that the user typed in. If you are expecting more than one, you may want to use a for-loop for grabbing parameters? Up to you.
 getParamBuff() Each time getParamBuff() is called, it allocates a buffer for the NEXT parameter string the user typed and returns it. This means YOU MUST FREE THIS BUFFER WHEN YOUR DONE WITH IT. See this being done in the code above.
 
 That's about it. Give it a try and see if it helps.
