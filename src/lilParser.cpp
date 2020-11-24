@@ -118,26 +118,27 @@ char* lilParser::getParam(void) {
 	int 	index;
 	
 	buff = NULL;
-	if (currentCmd) {																					// Had successful parse.
-		buff = (char*) malloc(getParamSize()+1);												// Ask for memory.
-		if (buff) {																						// If we got memory.
-  		index = 0;																						// Ready to write in the chars..
-    	if (paramBuff[paramIndex] != '\0') {                                  		// Not looking at empty buffer.
-      	while (paramBuff[paramIndex] != '\0' && paramBuff[paramIndex] != EOL) { // Loop through to the next param.
-        		buff[index++] = paramBuff[paramIndex++];										// Filling the user buff.
-      	}
-      	buff[index] = '\0';                                                 		// Cap off the new buff.
-      	if (paramBuff[paramIndex] == EOL) {                                 		// If EOL kicked us out.
-        		paramIndex++;																			// Hop over it.
-      	}
-    	}
-  	}
-  }
-  return buff;                                                           			// Pass back the result.
+	if (currentCmd) {																						// If we had successful parse.
+		buff = (char*) malloc(getParamSize()+1);													// Ask for memory.
+		if (buff) {																							// If we got memory.
+			index = 0;																						// Ready to write in the chars..
+			if (paramBuff[paramIndex] != '\0') {                                  		// Not looking at empty buffer.
+				while (paramBuff[paramIndex] != '\0' && paramBuff[paramIndex] != EOL) { // Loop through to the next param.
+					buff[index++] = paramBuff[paramIndex++];										// Filling the user buff.
+				}
+				buff[index] = '\0';                                                 		// Cap off the new buff.
+				if (paramBuff[paramIndex] == EOL) {                                 		// If EOL kicked us out.
+					paramIndex++;																			// Hop over it.
+				}
+			}
+  		}
+	}
+	return buff;                                                           			// Pass back the result.
 }
 
 
-// Ok, its not -really- the param buff. All whitespace is reduced to SINGLE spaces.
+// Ok, its not -really- the param buff. All whitespace is reduced to SINGLE spaces. Passes
+// it back as a char* buffer that you MUST free when you are done with it.
 char* lilParser::getParamBuff(void) {
 	
 	char* outStr;
