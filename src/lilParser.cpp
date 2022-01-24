@@ -10,11 +10,12 @@
 char paramBuff[PARAM_BUFF_SIZE];
 
 // Create a parser.
-lilParser::lilParser(void) : linkList() { reset(); }
+lilParser::lilParser(void)
+	:linkList() { reset(); }
 
 
-// We own them so we can auto-dump em.
-lilParser::~lilParser(void) { dumpList(); }
+// We are a linked list, so the list auto dumps when we destruct.
+lilParser::~lilParser(void) {  }
 
 
 // Add a command we can parse for. Only command numbers >0 need apply.
@@ -257,16 +258,16 @@ int  cmdTemplate::cmdNumber(void) {
 void cmdTemplate::reset(void) {
 	
 	if (cmd) {									// If we got the buffer
-  	parsingCmd = true;
-  	cmdIndex = 0;
-  	badChar = false;
-  	cmdOK = false;
-  	parsingParam = false;
-  	paramIndex = 0;
-  } else {										// How many ways can we say "No, not doing it!"
-  	parsingCmd = false;
-  	badChar = true;
-  	cmdOK = false;
-  	parsingParam = false;
-  }
+		parsingCmd = true;
+		cmdIndex = 0;
+		badChar = false;
+		cmdOK = false;
+		parsingParam = false;
+		paramIndex = 0;
+	} else {										// How many ways can we say "No, not doing it!"
+		parsingCmd = false;
+		badChar = true;
+		cmdOK = false;
+		parsingParam = false;
+	}
 }
