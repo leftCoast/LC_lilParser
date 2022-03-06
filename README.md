@@ -40,7 +40,7 @@ void loop(void) {
    }
 }
 ```
-**5 : Handling commands.** Handlers are the functions that are called to execute the commands. They can be simple commands that are just triggers for actions. Or they can contain parameters to add more info.Here is an example of a command that creates a new folder on an SD drive. This is so you can see how to deal with a simple parameter string.
+**5 : Handling commands.** Handlers are the functions that are called to execute the commands. They can be simple commands that are just triggers for actions. Or they can contain parameters to add more info. Here is an example of a command that creates a new folder on an SD drive. This is so you can see how to deal with a simple parameter string.
 ```
 void makeDirectory(void) {
 
@@ -51,7 +51,6 @@ void makeDirectory(void) {
       charBuff = ourParser.getParamBuff();         // We get the first parameter, assume its the new folder's name.
       strcpy(pathBuff,wd);                         // Start building up the full path. Starting with working directory.
       strcat(pathBuff,charBuff);                   // Add in the user's parameter.
-      free(charBuff);                              // Dump the parameter buffer ASAP.
       if (!SD.mkdir(pathBuff)) {                   // If we can not create the folder.
          Serial.println("Can't create folder.");   // We'll send back an error.
       }
@@ -59,7 +58,7 @@ void makeDirectory(void) {
 }
 ```
 numParams() actually returns the number of parameters that the user typed in. If you are expecting more than one, you may want to use a for-loop for grabbing parameters? Up to you.
-getParamBuff() Each time getParamBuff() is called, it allocates a buffer for the NEXT parameter string the user typed and returns it. This means YOU MUST FREE THIS BUFFER WHEN YOUR DONE WITH IT. See this being done in the code above.
+getParamBuff() Each time getParamBuff() is called, it (Or any other command that wants to allocate a string to hand back) allocates a buffer for the NEXT parameter string the user typed and returns it. This means you may want to make a local copy of the string it gives you. The pointer may not last long.
 
 That's about it. Give it a try and see if it helps.
 
