@@ -58,7 +58,7 @@ void makeDirectory(void) {
 }
 ```
 numParams() actually returns the number of parameters that the user typed in. If you are expecting more than one, you may want to use a for-loop for grabbing parameters? Up to you.
-getParamBuff() Each time getParamBuff() is called, it (Or any other command that wants a string to hand back) allocates a buffer for the NEXT parameter string the user typed and returns it. This means you may want to make a local copy of the string it gives you. The pointer may not last long.
+getParamBuff() Each time getParamBuff() is called, it (Or any other command that wants a string to hand back) re-allocates the return string for its own use. This means, the pointer you have been handed, is shared. Therefore it may not last long. So, if you need that information for awhile, you should think about making a copy of it for yourself.
 
 That's about it. Give it a try and see if it helps.
 
