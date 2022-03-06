@@ -1,5 +1,5 @@
 #include <lilParser.h>
-
+#include <strTools.h>
 
 
 // ****************************************
@@ -7,15 +7,30 @@
 // ****************************************
 
 
-char paramBuff[PARAM_BUFF_SIZE];
+char*	paramBuff = NULL;
+int	buffCount = 0;
 
 // Create a parser.
 lilParser::lilParser(void)
-	:linkList() { reset(); }
+	:linkList() {
+	
+	buffCount++;
+	if (!paramBuff) {
+		resizeBuff(PARAM_BUFF_SIZE,&paramBuff);
+	}
+	reset();
+}
 
 
 // We are a linked list, so the list auto dumps when we destruct.
-lilParser::~lilParser(void) {  }
+lilParser::~lilParser(void) {
+
+	buffCount--;
+	if (!buffCount) {
+		resizeBuff(0,&paramBuff);
+	}
+	resizeBuff(0,&returnStr);
+}
 
 
 // Add a command we can parse for. Only command numbers >0 need apply.
@@ -112,29 +127,26 @@ int lilParser::getParamSize(void) {
 
 
 // Returns the next param in the param string. Passes it back as a char* buffer that
-// you MUST free when you are done with it.
+// you should, depending on how you use it, make a local copy first thing.
 char* lilParser::getParam(void) {
 	
-	char*	buff;
 	int 	index;
 	
-	buff = NULL;
 	if (currentCmd) {																						// If we had successful parse.
-		buff = (char*) malloc(getParamSize()+1);													// Ask for memory.
-		if (buff) {																							// If we got memory.
+		if (resizeBuff(getParamSize()+1,&returnStr)) {											// If we can get the memory.
 			index = 0;																						// Ready to write in the chars..
 			if (paramBuff[paramIndex] != '\0') {                                  		// Not looking at empty buffer.
 				while (paramBuff[paramIndex] != '\0' && paramBuff[paramIndex] != EOL) { // Loop through to the next param.
-					buff[index++] = paramBuff[paramIndex++];										// Filling the user buff.
-				}
-				buff[index] = '\0';                                                 		// Cap off the new buff.
+					returnStr[index++] = paramBuff[paramIndex++];								// Filling the user buff.
+				}																								//
+				returnStr[index] = '\0';                                                // Cap off the new buff.
 				if (paramBuff[paramIndex] == EOL) {                                 		// If EOL kicked us out.
 					paramIndex++;																			// Hop over it.
 				}
 			}
   		}
 	}
-	return buff;                                                           			// Pass back the result.
+	return returnStr;                                                           		// Pass back the result.
 }
 
 
@@ -142,19 +154,19 @@ char* lilParser::getParam(void) {
 // it back as a char* buffer that you MUST free when you are done with it.
 char* lilParser::getParamBuff(void) {
 	
-	char* outStr;
 	int	i;
 	
-	outStr = (char*) malloc(strlen(paramBuff)+1);
-	strcpy(outStr,paramBuff);
-	i=0;
-	while(outStr[i]!='\0') {
-		if (outStr[i]==EOL) {
-			outStr[i]=' ';
+	if (resizeBuff(getParamSize()+1,&returnStr)) {		// If we can get the memory.
+		strcpy(returnStr,paramBuff);
+		i=0;
+		while(returnStr[i]!='\0') {
+			if (returnStr[i]==EOL) {
+				returnStr[i]=' ';
+			}
+			i++;
 		}
-		i++;
 	}
-	return outStr;
+	return returnStr;
 }
 
 
@@ -182,16 +194,15 @@ void lilParser::reset(void) {
 
 
 cmdTemplate::cmdTemplate(int inCmdNum, const char* inCmd) {
-
-  cmdNum = inCmdNum;
-  cmd = (char*)malloc(sizeof(char) * (strlen(inCmd) + 1));
-  if (cmd) {
-  	strcpy(cmd, inCmd);
-	}
+	
+	cmd = NULL;
+	heapStr(&cmd,inCmd);
+	cmdNum = inCmdNum;
 	reset();
 }
 
-cmdTemplate::~cmdTemplate(void) { if (cmd) free(cmd); }
+
+cmdTemplate::~cmdTemplate(void) { freeStr(cmd); }
 
 
 void cmdTemplate::addChar(char inChar) {

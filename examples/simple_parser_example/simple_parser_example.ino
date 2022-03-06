@@ -11,9 +11,6 @@ In the serial monitor..
 In order to run this you will need, along with this library : LC_baseTools
 LC_baseTools can be found in in the Arduino library manager.
 
-Or here : https://github.com/leftCoast/LC_baseTools
-
-
 *************************************************************************************
 *************************************************************************************/
 
@@ -35,6 +32,7 @@ void setup() {
    pinMode(LED_PIN, OUTPUT);        // Set up the LED pin.
    ourParser.addCmd(LEDOn,"on");    // Type on to turn on the LED.
    ourParser.addCmd(LEDOff,"off");  // Type off to turn it off again.
+   Serial.println("Type on or off to control the LED.");
 }
 
 

@@ -5,8 +5,8 @@
 
 // 8/2019 - I must have been on something when I wrote this. It all works, but WOW I can't
 // make heads or tails of it now.
-
-
+//
+//
 // A Command is: CMD params.. \n
 // Parameters are seperated by whitespace.
 // Succesful parsed commands return positive integers.
@@ -14,9 +14,14 @@
 // Unparsable commands return -1
 // Meaning? Your enum of commands should start with noCommand. IE a 0 to skip over in your
 // switch statment.
-
+//
 // I think I'm going to do a buff = realloc(buff,size); thing here.
 // Need to add numBytes for params.
+//
+// 3/2022 - Rewriting this to take away the dynamic memory issues. The plan is to pass a
+// string pointer back for the params that is reallocated over and over internally so the
+// user doesn't do the freening of it.
+//
 
 
 #define EOL '\n'            // Set this to match your system.
@@ -34,8 +39,8 @@ class lilParser : public linkList {
 				int	addChar(char inChar);
 				int	numParams(void);
 				int	getParamSize(void);
-				char*	getParam(void);			// YOU HAVE TO FREE THIS WHEN YOUR DONE!
-				char*	getParamBuff(void);		// YOU HAVE TO FREE THIS WHEN YOUR DONE!
+				char*	getParam(void);			// COPY THIS STRING ASAP. IT'S A TEMP.
+				char*	getParamBuff(void);		// COPY THIS STRING ASAP. IT'S A TEMP.
 				void	reset(void);
     
 				cmdTemplate*	currentCmd;

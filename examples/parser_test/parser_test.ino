@@ -13,14 +13,17 @@ mkdr  - Make new directory.
 In order to run this you will need, along with this library : LC_baseTools
 LC_baseTools can be found in in the Arduino library manager.
 
-Or here : https://github.com/leftCoast/LC_baseTools
-
-
 And, of course, hardware with an SD drive. You will need the pin number of your SD's
 chip select. Other than that? 
 
 Should work. I hope.
 
+3/2022 - We think the pandemic is finally winding down. (Fingers crossed) Rewriting
+lilParser to handle dynamic memory internally. No longer must the user deal with this. SO
+DON'T GO FREEING ANY STRINGS IT HANDS YOU !
+
+Also added some description text at the beginning of this program so the user can see what
+commands she has to mess about with.
 *************************************************************************************
 *************************************************************************************/
 
@@ -56,6 +59,13 @@ void setup() {
    ourParser.addCmd(listDir,"ls");     // Add ls command
    ourParser.addCmd(makeDir,"mkdr");   // Add mkdr command
    ourParser.addCmd(makeDir,"mkdir");  // We'll take it either way.
+   
+   Serial.println("This gives some simple file commands for you to play with.");
+   Serial.println("  pwd    - Print working directory.");
+   Serial.println("  cd     - Change working directory.");
+   Serial.println("  ls     - List working directory.");
+   Serial.println("  mkdr   - Make directory.");
+   Serial.println("  mkdir  - Make directory (version II).");
 }
 
 
@@ -135,7 +145,6 @@ void makeDirectory(void) {
       charBuff = ourParser.getParamBuff();         // We get the first parameter, assume its the new folder's name.
       strcpy(pathBuff,wd);                         // Start building up the full path. Starting with working directory.
       strcat(pathBuff,charBuff);                   // Add in the user's parameter.
-      free(charBuff);                              // Dump the parameter buffer ASAP.
       if (!SD.mkdir(pathBuff)) {                   // If we can not create the folder.
          Serial.println("Can't create folder.");   // We'll send back an error.
       }
@@ -194,6 +203,5 @@ void changeDirectory(void) {
             Serial.println("Can't find it.");         // Something went wrong.
          }
       }
-      free(charBuff);                                 // Dump the parameter buffer.
    }   
 }
