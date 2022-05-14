@@ -202,7 +202,7 @@ cmdTemplate::cmdTemplate(int inCmdNum, const char* inCmd) {
 }
 
 
-cmdTemplate::~cmdTemplate(void) { freeStr(cmd); }
+cmdTemplate::~cmdTemplate(void) { freeStr(&cmd); }
 
 
 void cmdTemplate::addChar(char inChar) {
