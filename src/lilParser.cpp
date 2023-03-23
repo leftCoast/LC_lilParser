@@ -11,12 +11,12 @@ char*	paramBuff = NULL;
 int	buffCount = 0;
 
 // Create a parser.
-lilParser::lilParser(void)
-	:linkList() {
+lilParser::lilParser(size_t _param_buf_size)
+	:linkList(), param_buff_size(_param_buf_size) {
 	
 	buffCount++;
 	if (!paramBuff) {
-		resizeBuff(PARAM_BUFF_SIZE,&paramBuff);
+		resizeBuff(param_buff_size,&paramBuff);
 	}
 	reset();
 }
@@ -96,7 +96,7 @@ int lilParser::numParams(void) {
   if (paramBuff[0] == '\0') return 0;                       		// Actually is a special case.
   count = 0;                                                		// Ready for looping.
   index = 0;
-  while (paramBuff[index] != '\0' && index < PARAM_BUFF_SIZE) {	// Until we run out of string.
+  while (paramBuff[index] != '\0' && index < param_buff_size) {	// Until we run out of string.
     if (paramBuff[index] == EOL) {                          		// Count up all the EOLs.
       count++;
     }

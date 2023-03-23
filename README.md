@@ -6,7 +6,12 @@ Need to control a program from a command line? This should take most of the drud
 **Depends on**  
 [LC_baseTools](https://github.com/leftCoast/LC_baseTools)
 
-**1 : Create your parser.** ```lilParser ourParser; // Typically you create this as a global.```
+**1 : Create your parser.** 
+
+```
+lilParser ourParser; // Typically you create this as a global.
+lilParser longLineParser(80); // Set the line buffer size if you need more than 40 bytes.
+```
 
 **2 : Define your commands.** Set up an enum to list the commands you would like to use. Make sure the first command is noCommand or something similar. Why is this? Because, as the parser is running through inputted text, it returns 0 for "Not done parsing yet". It passes back -1 for "I can't parse this!" and all other numbers are valid commands. So to lessen confusion your first (0) command should be something like "noCommand" or "stillParsing". Your enum should looks something like this..
 ```
