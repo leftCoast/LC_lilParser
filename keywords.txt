@@ -1,0 +1,28 @@
+#######################################
+# Syntax Coloring Map for EMA
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+lilParser	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+addCmd	KEYWORD2
+addChar	KEYWORD2
+numParams	KEYWORD2
+getParamSize	KEYWORD2
+getParam	KEYWORD2
+getParamBuff	KEYWORD2
+reset	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+PARAM_BUFF_SIZE	LITERAL1
+EOL	LITERAL1
