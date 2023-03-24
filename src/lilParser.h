@@ -32,7 +32,7 @@ class cmdTemplate;
 class lilParser : public linkList {
 
 	public:
-				lilParser(size_t param_buf_size=PARAM_BUFF_SIZE);
+				lilParser(size_t inBufSize=PARAM_BUFF_SIZE);
 	virtual	~lilParser(void);
 		
 				void	addCmd(int inCmdNum, const char* inCmd);
@@ -47,7 +47,7 @@ class lilParser : public linkList {
 				bool				firstLetter;
 				bool				sawEOL;
 				int				paramIndex;
-				size_t		param_buff_size;
+				size_t		paramBuffSize;
 };
 
 
