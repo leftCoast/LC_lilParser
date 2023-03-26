@@ -13,6 +13,7 @@ int	buffCount = 0;
 // Create a parser.
 lilParser::lilParser(size_t inBufSize)
 	:linkList() {
+	
 	paramBuffSize = inBufSize;
 	buffCount++;
 	if (!paramBuff) {
@@ -151,7 +152,8 @@ char* lilParser::getParam(void) {
 
 
 // Ok, its not -really- the param buff. All whitespace is reduced to SINGLE spaces. Passes
-// it back as a char* buffer that you MUST free when you are done with it.
+// it back as a char* buffer that you should, depending on how you use it, make a local
+// copy first thing.
 char* lilParser::getParamBuff(void) {
 	
 	int	i;

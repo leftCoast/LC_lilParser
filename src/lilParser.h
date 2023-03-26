@@ -22,17 +22,20 @@
 // string pointer back for the params that is reallocated over and over internally so the
 // user doesn't do the freening of it.
 //
+// 3/2023 - Pokergeist John J Added the ability to set your param buffer to a different
+// size when creating a parser. I changed the #define to DEF_BUFF_SIZE 'cause it made more
+// sense than the old name.
 
 
-#define EOL '\n'            // Set this to match your system.
-#define PARAM_BUFF_SIZE 40  // One buff to fit them all..
+#define EOL '\n'				// Set this to match your system.
+#define DEF_BUFF_SIZE 40	// One buff to fit them all..
 
 class cmdTemplate;
 
 class lilParser : public linkList {
 
 	public:
-				lilParser(size_t inBufSize=PARAM_BUFF_SIZE);
+				lilParser(size_t inBufSize=DEF_BUFF_SIZE);
 	virtual	~lilParser(void);
 		
 				void	addCmd(int inCmdNum, const char* inCmd);
@@ -47,7 +50,7 @@ class lilParser : public linkList {
 				bool				firstLetter;
 				bool				sawEOL;
 				int				paramIndex;
-				size_t		paramBuffSize;
+				size_t			paramBuffSize;
 };
 
 
