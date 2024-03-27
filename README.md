@@ -10,7 +10,7 @@ Need to control a program from a command line? This should take most of the drud
 
 ```
 lilParser ourParser; // Typically you create this as a global.
-lilParser longLineParser(80); // Set the line buffer size if you need more than 40 bytes.
+lilParser longLineParser(80); // Set the line buffer size if you need more than 20 bytes. Minimum would be 2.
 ```
 
 **2 : Define your commands.** Set up an enum to list the commands you would like to use. Make sure the first command is noCommand or something similar. Why is this? Because, as the parser is running through inputted text, it returns 0 for "Not done parsing yet". It passes back -1 for "I can't parse this!" and all other numbers are valid commands. So to lessen confusion your first (0) command should be something like "noCommand" or "stillParsing". Your enum should looks something like this..
@@ -49,11 +49,11 @@ void loop(void) {
 ```
 void makeDirectory(void) {
 
-   char* charBuff;                                 // A pointer for the folder name string.
+   char* param;                                    // A pointer for the folder name string.
    char  pathBuff[PATH_CHARS];                     // A buffer to hold the full path to the new folder.
    
    if (ourParser.numParams()) {                    // If they typed in somethng past the command.
-      charBuff = ourParser.getParamBuff();         // We get the first parameter, assume its the new folder's name.
+      param = ourParser.getnextParam();            // We get the first parameter, assume its the new folder's name.
       strcpy(pathBuff,wd);                         // Start building up the full path. Starting with working directory.
       strcat(pathBuff,charBuff);                   // Add in the user's parameter.
       if (!SD.mkdir(pathBuff)) {                   // If we can not create the folder.
@@ -64,7 +64,9 @@ void makeDirectory(void) {
 ```
 numParams() actually returns the number of parameters that the user typed in. If you are expecting more than one, you may want to use a for-loop for grabbing parameters? Up to you.  
 
-getParamBuff() Each time getParamBuff() is called, it (Or any other command that wants a string to hand back) re-allocates the return string for its own use. This means, the pointer you have been handed, is shared. Therefore it may not last long. So, if you need that information for awhile, you should think about making a copy of it for yourself.
+getNextParam() Each time getNextParam() is called, it (Or any other command that wants a string to hand back) re-allocates a c-string for its own use. This means, the pointer you have been handed, is temporary. Therefore it may not last long. So, if you need that information for awhile, you should think about making a copy of it for yourself.
+
+getParamBuff() Passes back the entire typed in param string as a string. Good for passing text blocks.
 
 That's about it. Give it a try and see if it helps.
 
