@@ -45,7 +45,7 @@ lilParser::~lilParser(void) {
 
 
 // Add a command ID  and matching type-able string. Multiple strings can match with an ID.
-// But you dn't want more than one ID to match a string. That won'y work.	
+// But you don't want more than one ID to match a string. That won't work.	
 void lilParser::addCmd(int inCmdNum, const char* inCmd) {
 	
 	cmdTemplate*	newCmd;
@@ -75,6 +75,7 @@ int lilParser::addChar(char inChar) {
 	}
 	return 0;
 }	
+
 
 // This resets everything for a new parse.
 void lilParser::resetParse(void) {
