@@ -76,9 +76,7 @@ int lilParser::addChar(char inChar) {
 	return 0;
 }	
 
-// This resets everything for a new parse. So, if you want to pass back a result, you need
-// to save a local copy before calling this. Because, like I said. It'll clear out
-// everything.
+// This resets everything for a new parse.
 void lilParser::resetParse(void) {
 
 	cmdTemplate*	trace;
