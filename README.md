@@ -10,7 +10,7 @@ Need to control a program from a command line? This should take most of the drud
 
 ```
 lilParser ourParser; // Typically you create this as a global.
-lilParser longLineParser(80); // Set the line buffer size if you need more than 20 bytes. Minimum would be 2.
+lilParser longLineParser(80); // Set the param buffer size if you need more than 20 bytes. Minimum would be 2.
 ```
 
 **2 : Define your commands.** Set up an enum to list the commands you would like to use. Make sure the first command is noCommand or something similar. Why is this? Because, as the parser is running through inputted text, it returns 0 for "Not done parsing yet". It passes back -1 for "I can't parse this!" and all other numbers are valid commands. So to lessen confusion your first (0) command should be something like "noCommand" or "stillParsing". Your enum should looks something like this..
