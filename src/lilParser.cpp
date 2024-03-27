@@ -35,8 +35,8 @@ lilParser::lilParser(int inBufSize) {
 
 
 // And our destructor. Basically, release what we allocated. Will this ever be used?
-// Probably never. But if someone wants to spawn a parser on the fly. Then delte it? No
-// worries. It'll clean up after itself as it should.
+// Probably never. But if someone wants to spawn a parser on the fly. Then delete it?
+// No worries. It'll clean up after itself as it should.
 lilParser::~lilParser(void) {
 
 	resizeBuff(0,&paramBuff);
