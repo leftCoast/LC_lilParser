@@ -2,285 +2,316 @@
 #include <strTools.h>
 
 
-// ****************************************
-// lilParser
-// ****************************************
 
+// Handy little guy that decides the type of each char. We have 3 types. text is basically
+// printable. space is whitespace. endline is either EOL or '\0'.
 
-char*	paramBuff = NULL;
-int	buffCount = 0;
+enum charType { text, space, endline };
 
-// Create a parser.
-lilParser::lilParser(size_t inBufSize)
-	:linkList() {
-	
-	paramBuffSize = inBufSize;
-	buffCount++;
-	if (!paramBuff) {
-		resizeBuff(paramBuffSize,&paramBuff);
-	}
-	reset();
+charType getType(char inChar) {
+
+	if (inChar=='\0'||inChar==EOL) return endline;
+	if (isspace(inChar)) return space;
+	return text;
 }
 
 
-// We are a linked list, so the list auto dumps when we destruct.
+// Create a new parser. The buff size is for the param list. If you are not using commands
+// with params? You may want to just set this maybe 2 to save the memory.
+lilParser::lilParser(int inBufSize) {
+
+	resultStr = NULL;									// Call a function for a string output? This is the string you get.
+	paramBuffSize = 0;								// Default this to zero. If we get one, we'll update this.
+	haveParamBuff = false;							// And no, we don't have one yet. May never have one.
+	paramBuff = NULL;									// ALL pointers get initialized to NULL here.
+	if (resizeBuff(inBufSize,&paramBuff)) {	// Lets see if we can allocate the param buffer.
+		haveParamBuff = true;						// Ok we got one.
+		paramBuffSize = inBufSize;					// And it's this many bytes.
+		resetParse();									// Lets setup for our first parse.
+	} else {												// Else we didn't get one.. 
+		ourState = configErr;						// Set our state to configErr.
+	}
+}
+
+
+// And our destructor. Basically, release what we allocated. Will this ever be used?
+// Probably never. But if someone wants to spawn a parser on the fly. Then delte it? No
+// worries. It'll clean up after itself as it should.
 lilParser::~lilParser(void) {
 
-	buffCount--;
-	if (!buffCount) {
-		resizeBuff(0,&paramBuff);
-	}
-	resizeBuff(0,&returnStr);
+	resizeBuff(0,&paramBuff);
+	resizeBuff(0,&resultStr);
 }
 
 
-// Add a command we can parse for. Only command numbers >0 need apply.
+// Add a command ID  and matching type-able string. Multiple strings can match with an ID.
+// But you dn't want more than one ID to match a string. That won'y work.	
 void lilParser::addCmd(int inCmdNum, const char* inCmd) {
-
-  cmdTemplate* command;
-
-  if (inCmdNum > 0) {
-    command = (cmdTemplate*) new cmdTemplate(inCmdNum, inCmd);
-    if (command) {
-      addToTop((linkListObj*)command);
-    }
-  }
+	
+	cmdTemplate*	newCmd;
+	
+	if (ourState != configErr) {
+		newCmd = new cmdTemplate(inCmdNum,inCmd);
+		if (newCmd) {
+			if (newCmd->isOK()) {
+				addToTop(newCmd);
+			}
+		} else {
+			ourState = configErr;
+		}
+	}
 }
 
 
-// Pass in charactors and get back, -1 bad command, 0 still parsing or a command number.
+// A char has arrived! Let's run it through the parsing machine and see what the result is.
 int lilParser::addChar(char inChar) {
 
-  cmdTemplate*  trace;
+	switch(ourState) {
+		case startParse		: return parseStart(inChar);
+		case parsingCmd		: return parseCmd(inChar);
+		case parsingParams	: return parseParam(inChar);
+		case dumpingParams	: return dumpParam(inChar);
+		case configErr			: return brokenParse(inChar);
+	}
+	return 0;
+}	
 
-  if (sawEOL) {                           		// Means that LAST time we saw EOL.
-    reset();                              		// Meaning, we are at a fresh beginning!
-  }
-  if (!firstLetter) {                     		// Not seen first letter.
-    if (isspace(inChar)) {                		// White space?
-      return 0;                           		// Burn off leading white space.
-    } else {                              		// Oh, printable?
-      firstLetter = true;                 		// Then we HAVE seen first letter
-    }
-  }
-  if (inChar == EOL) {                    		// Ah! The end of the line!
-    sawEOL = true;                        		// Well, it is true. Its right there.
-    trace = (cmdTemplate*)theList;        		// Setup to see if any cmds are still valid..
-    while (trace != NULL) {               		// Start looping.
-      if (trace->validCmd()) {            		// Find the first cmd that's still valid.
-        currentCmd = trace;               		// Save off who it is.
-        trace->endParse();                		// Tell the valid one, "We're done here."
-        return trace->cmdNumber();        		// And return its command number.
-      }
-      trace = (cmdTemplate*)trace->getNext();	// We're still here? Check the next cmd.
-      
-    }
-    return -1;                            		// Saw EOL and no one took the bait? Bad inputted command.
-  } else {                                		// Not seen EOL..
-    trace = (cmdTemplate*)theList;        		// Setup to see if any cmds are still parsing..
-    while (trace != NULL) {               		// Start looping.
-      if (trace->parsing()) {             		// Are you still parsing?
-        trace->addChar(inChar);           		// Parse this big boy!
-      }
-      trace = (cmdTemplate*)trace->getNext();	// Off to the next cmd.
-    }
-    return 0;                             		// Whatever, until EOL we're still parsin'
-  }
+// This resets everything for a new parse. So, if you want to pass back a result, you need
+// to save a local copy before calling this. Because, like I said. It'll clear out
+// everything.
+void lilParser::resetParse(void) {
+
+	cmdTemplate*	trace;
+	
+	if (ourState!=configErr) {								// If we were able to setup shop..
+		trace = (cmdTemplate*)getFirst();				// Grab a pointer to the top of the list.
+		while(trace) {											// While we have a non-NULL list pointer.
+			trace->reset();									// Reset the templates for new parse.
+			trace = (cmdTemplate*)trace->getNext();	// Hop to the next template on the list.
+		}															//
+		paramIndex = 0;										// Reset the param buff writing index.
+		ourState = startParse;								// Ok, ready to parse!
+	}
 }
 
 
+// This is called if we couldn't set up the parser. Probably not enough RAM. It basically
+// eats chars 'till an endline then outputs the error message.
+int lilParser::brokenParse(char inChar) {
+
+	if (getType(inChar)==endline) return CONFIG_ERR;
+	return 0;
+}
+
+
+// This is basically a white space eater for the beginning of command strings.		
+int lilParser::parseStart(char inChar) {
+
+	tokenIdx = 0;							// After the first char, reset the param token index.
+	if (haveParamBuff) {					// And if we have a param buff..
+		paramBuff[0] = '\0';				// Clear the damn thing out.
+	}
+	switch(getType(inChar)) {			// Check the kind of char we got..
+		case text		:					// Got text
+			ourState = parsingCmd;		// Our state is now parsing a command.
+			return parseCmd(inChar);	// Pass in this non whitespace char.
+		case space		: 					//
+		case endline	: return 0;		// Got space or endlne..
+	}											//
+	return 0;								// Won't happen. Shuts up compiler.
+}
+
+
+// At this point we knocked off all the leading blank chars. This is at least the first
+// or subsequent printable char. Looking for a valid command or a fail to parse.
+int lilParser::parseCmd(char inChar) {
+	
+	cmdTemplate*	trace;
+	
+	trace = (cmdTemplate*)getFirst();						// We are parsing a command. Get top of list.
+	switch(getType(inChar)) {									// Check the kind of char we got..
+		case text		:											// Got text..
+			while(trace) {											// While trace is not NULL..	
+				trace->addChar(inChar);							// Every template gets a look at the character.
+				trace = (cmdTemplate*)trace->getNext();	// Hop on to the next guy.
+			}															//
+			return 0;												// Keep 'me coming. We're still listening.
+		case space		:											// Got a space..
+			cmd = 0;													// Reset the command.
+			while(trace && !cmd) {								// While trace is not NULL and no command has been claimed..
+				cmd = trace->isMatch();							// See if what we point at is a match.
+				trace = (cmdTemplate*)trace->getNext();	// Hop to the next template on the list.
+			}															//
+			if (!cmd) {												// If we didn't get a parse success..
+				cmd = PARSE_ERR;									// We note this as a parsing error.
+				ourState = dumpingParams;						// Dump the rest.
+				return 0;											// Return our basic, "keep it up, furball'.
+			} else {													// Else we have valid command..
+				if (haveParamBuff) {								// If we have a param buffer..
+					ourState = parsingParams;					// Now we're parsing a param list.
+					return 0;										// Tell 'em to keep going, we're listening.				
+				} else {												// Else we have command, but no param buffer..
+					ourState = dumpingParams;					// Dump the rest.
+					return 0;										// Return our basic, "keep it up, furball'.
+				}														//
+			}															//
+		case endline	:											// Got an end of line..
+			cmd = 0;													// Reset the command.
+			while(trace && !cmd) {								// While trace is not NULL and no command has been claimed..
+				cmd = trace->isMatch();							// See if what we point at is a match.
+				trace = (cmdTemplate*)trace->getNext();	// Hop to the next template on the list.
+			}															//
+			resetParse();											// We clear out for next parse.
+			if (cmd) {												// If we got a command..
+				return cmd;											// Return the command ID.
+			} else {													// Else, no one claimed it..
+				return PARSE_ERR;									// Pass back a parse error.
+			}															//
+	}																	//
+	return 0;														// Just in case. But we should have coved all cases.																//
+}
+	
+
+// To be here, we must have found a valid command.
+int lilParser::parseParam(char inChar) {
+
+	switch(getType(inChar)) {							// Check the kind of char we got..
+		case text		:									// Got text..
+		case space 		:									// Or a space..
+			if (paramBuffSize>paramIndex+1) {		// If the buffer is big enough..
+				paramBuff[paramIndex] = inChar;		// Stuff in the char.	
+				paramIndex++;								// Bump up indes to next slot
+				paramBuff[paramIndex] = '\0';			// Stuff in a line ending. Just in case..
+				return 0;									// Return, "keep 'em coming! If you got 'em."
+			} else {											// Else the buffer was NOT big enough..
+				cmd = PARAM_ERR;							// We switch the command to a param error.
+				ourState = dumpingParams;				// Setup to dump the rest of the input.
+				return dumpParam(inChar);				// Start the dumping process.
+			}													//
+		case endline	:									// Got endLine..
+			resetParse();									// We done! Do reset.
+			return cmd;										// Pass back the command we got from before.
+	}															//
+	return 0;												// Won't happen. Shuts up compiler.
+}
+							
+			
+// To be here, we must NOT have found a valid command. We may have had an error.	
+int lilParser::dumpParam(char inChar) {
+	
+	if (getType(inChar)==endline) {		// If we got to the end..
+		resetParse();							// Reset the parse.
+		return cmd;								// return whatever command was stored.
+	}												//
+	return 0;									// All other cases just ask for more.
+}
+	
+
+// Count the beginnings of non white char blocks.			
 int lilParser::numParams(void) {
 
-  int count;
-  int index;
-
-  if (paramBuff[0] == '\0') return 0;                       		// Actually is a special case.
-  count = 0;                                                		// Ready for looping.
-  index = 0;
-  while (paramBuff[index] != '\0' && index < paramBuffSize) {   // Until we run out of string.
-    if (paramBuff[index] == EOL) {                              // Count up all the EOLs.
-      count++;
-    }
-    index++;
-  }
-  return count + 1;
-}
-
-
-// Same as strlen 
-int lilParser::getParamSize(void) {
-
-	int index;
+	int	i;
 	int	count;
 	
-	count = 0;																			// Nothin' yet..
-	if (currentCmd) {																	// Had successful parse.
-		index = paramIndex;																// local copy of paramIndex.
-		if (paramBuff[index] != '\0') {                                 	// Not at the end of the buffer.
-			while (paramBuff[index] != '\0' && paramBuff[index] != EOL) {	// Loop through the next param.
-				count++;																		// Counting..
-				index++;
-			}
+	i = 0;															// Point at the beginning.
+	count = 0;														// As yet, we have none.
+	while(true) {													// loop 'till we drop.
+		while(getType(paramBuff[i])==space) i++;			// Run the string while a space..
+		switch(getType(paramBuff[i])) {						// So, what are we lookin' at?
+			case space		: return 0;							// It can't be space. Return 0.
+			case text		:										// We got text..
+				count++;												// Bump up the count.
+				while(getType(paramBuff[i])==text) i++;	// Run the string while printable..
+				if (getType(paramBuff[i])==endline) {		// If we hit the end..
+					return count;									// Return the count.
+				}														//
+			break;													// Din't hit the end, keep going.
+			case endline	: return count;					// We hit the end? Return the count.
 		}
 	}
-	return count;																		// Tell the world.
 }
 
 
-// Returns the next param in the param string. Passes it back as a char* buffer that
-// you should, depending on how you use it, make a local copy first thing.
-char* lilParser::getParam(void) {
+// We keep track of the last param handed out. This starts the search for the next param
+// from there. Then the location of this param's end is saved for the next getParam call.
+char* lilParser::getNextParam(void) {
+
+	int	endIdx;
+	int	numBytes;
+	int	outIdx;
 	
-	int 	index;
-	
-	if (currentCmd) {																						// If we had successful parse.
-		if (resizeBuff(getParamSize()+1,&returnStr)) {											// If we can get the memory.
-			index = 0;																						// Ready to write in the chars..
-			if (paramBuff[paramIndex] != '\0') {                                  		// Not looking at empty buffer.
-				while (paramBuff[paramIndex] != '\0' && paramBuff[paramIndex] != EOL) { // Loop through to the next param.
-					returnStr[index++] = paramBuff[paramIndex++];								// Filling the user buff.
-				}																								//
-				returnStr[index] = '\0';                                                // Cap off the new buff.
-				if (paramBuff[paramIndex] == EOL) {                                 		// If EOL kicked us out.
-					paramIndex++;																			// Hop over it.
-				}
-			}
-  		}
+	while(getType(paramBuff[tokenIdx])==space) tokenIdx++;	// Run across all the white space.
+	if (getType(paramBuff[tokenIdx])==endline) return NULL;	// If sitting on the endline return NULL. We're done.
+	endIdx = tokenIdx;													// We must be pointing at text. Bring up endIdx.
+	while(getType(paramBuff[endIdx])==text) endIdx++;			// Run endIdx across the text.
+	numBytes = endIdx - tokenIdx + 2;								// Calculate the number bytes needed for this param.
+	if (resizeBuff(numBytes,&resultStr)) {            			// If we can allocated the memory..
+		outIdx = 0;															// outIdx set to start of output string.
+		for(int i=tokenIdx;i<endIdx;i++) {							// For every char in the param..
+			resultStr[outIdx] = paramBuff[i];						// Add the char into the output string.
+			outIdx++;														// Bump up the output string's index.
+		}																		//
+		resultStr[outIdx] = '\0';										// Looping's over. Pop in the trailing '\0'.
+		tokenIdx = endIdx;												// Update the tokenIdx for the next call.
+		return resultStr;													// Hand the param string back to the caller.
+	} else {																	// Else the allocation failed..
+		return NULL;														// In this case all we can do is return NULL.
 	}
-	return returnStr;                                                           		// Pass back the result.
 }
-
-
-// Ok, its not -really- the param buff. All whitespace is reduced to SINGLE spaces. Passes
-// it back as a char* buffer that you should, depending on how you use it, make a local
-// copy first thing.
-char* lilParser::getParamBuff(void) {
-	
-	int	i;
-	
-	if (resizeBuff(getParamSize()+1,&returnStr)) {		// If we can get the memory.
-		strcpy(returnStr,paramBuff);
-		i=0;
-		while(returnStr[i]!='\0') {
-			if (returnStr[i]==EOL) {
-				returnStr[i]=' ';
-			}
-			i++;
-		}
-	}
-	return returnStr;
-}
-
-
-void lilParser::reset(void) {
-
-  cmdTemplate*  trace;
-
-  currentCmd = NULL;                    		// Deselect everyone.
-  firstLetter = false;                  		// Not seen a first letter.
-  sawEOL = false;                       		// Not seen the EOL yet, either.
-  paramIndex = 0;                       		// Ready for the next reading.
-  paramBuff[paramIndex] = '\0';         		// Cleared!
-  trace = (cmdTemplate*)theList;        		// Setup to reset all the cmds.
-  while (trace != NULL) {               		// Start looping.
-    trace->reset();                     		// trace must be non NULL to get here so OK to call.
-    trace = (cmdTemplate*)trace->getNext();	// Move to the next cmd.
-  }
-}
-
-
-
-// ****************************************
-// cmdTemplate
-// ****************************************
+		
+		
+char* lilParser::getParamBuff(void) { return paramBuff; }
+				
+				
+				
+// ************* cmdTemplate *************
 
 
 cmdTemplate::cmdTemplate(int inCmdNum, const char* inCmd) {
-	
-	cmd = NULL;
-	heapStr(&cmd,inCmd);
-	cmdNum = inCmdNum;
-	reset();
+
+	ready = false;
+	cmdStr = NULL;
+	if (heapStr(&cmdStr,inCmd)) {
+		cmdNum = inCmdNum;
+		ready = true;
+		reset();
+	}
 }
 
 
-cmdTemplate::~cmdTemplate(void) { freeStr(&cmd); }
+cmdTemplate::~cmdTemplate(void) { freeStr(&cmdStr); }
+
+
+bool cmdTemplate::isOK(void) { return ready; }
 
 
 void cmdTemplate::addChar(char inChar) {
-
-  if (parsingCmd) {                               // Ok, if parsing command.
-    if (isspace(inChar)) {                        // And we have a white space. (cmd done)
-      if (cmdIndex == (int)strlen(cmd)) {         // If we've parsed the same amount of chars as length.
-        cmdOK = true;                             // Then its a match!
-        parsingCmd = false;                       // No longer parsing the command.
-      }
-    } else if (cmd[cmdIndex] == inChar) {         // Else its a char, If its a match for us..
-      cmdIndex++;                                 // Bump up the index and go on.
-    } else {                                      // Else it was NOT a match.
-      badChar = true;                             // BAD char!
-      parsingCmd = false;                         // No longer parsing command.
-    }
-  } else if (cmdOK)  {                            // Not parsing a command, was it successful?
-    if (!parsingParam) {                          // If we're NOT currently parsing a param.
-      if (isspace(inChar)) {                      // Oh ho! Whitespace.
-        return;                                   // Really nothing to do.
-      } else {                                    // Else not whitespace.
-        parsingParam = true;                      // Meaning we're now parsing a param,
-        if (paramIndex) {                         //  We wern't, now we are. If index>0 its not the first.
-          paramBuff[paramIndex++] = EOL;          //  So pop in a seperator.
-        }
-        paramBuff[paramIndex++] = inChar;         // Either way pop in the charactor.
-      }
-    } else {                                      // Else were in the middle of parsing a param.
-      if (isspace(inChar)) {                      // A white space here means this param is complete.
-        parsingParam = false;                     // So NOT parsing a param.
-      } else {                                    // Else, parsing a param and not whitespace.
-        paramBuff[paramIndex++] = inChar;         // Add the Char to the list.
-      }
-    }
-  }
+	
+	if (ready && !fail) {
+		if (cmdStr[index]==inChar) {
+			index++;
+		} else {
+			fail = true;
+		}
+	}	
 }
 
 
-void cmdTemplate::endParse(void) {
-
-  if (cmdOK) {                        // If we're the one with the valid parse.
-    paramBuff[paramIndex] = '\0'; // Then close up the param buffer.
-  }
-}
-
-
-bool cmdTemplate::parsing(void) {
-  return !badChar;
-}
-
-
-// Two cases here. A) we've seen all the command chars and not hit a bad one.
-// Or B) we already went through this and set cmdOK to true.
-bool cmdTemplate::validCmd(void) { 
-  return ((cmdIndex == (int)strlen(cmd) && !badChar) || cmdOK);
-}
-
-
-int  cmdTemplate::cmdNumber(void) {
-  return cmdNum;
+int cmdTemplate::isMatch(void) {
+	
+	if (ready && !fail) {
+		if (cmdStr[index]=='\0') {
+			return cmdNum;
+		}
+	}
+	return 0;
 }
 
 
 void cmdTemplate::reset(void) {
-	
-	if (cmd) {									// If we got the buffer
-		parsingCmd = true;
-		cmdIndex = 0;
-		badChar = false;
-		cmdOK = false;
-		parsingParam = false;
-		paramIndex = 0;
-	} else {										// How many ways can we say "No, not doing it!"
-		parsingCmd = false;
-		badChar = true;
-		cmdOK = false;
-		parsingParam = false;
+
+	if (ready) {
+		index = 0;
+		fail	= false;
 	}
 }
