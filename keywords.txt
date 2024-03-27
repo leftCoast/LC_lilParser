@@ -15,10 +15,8 @@ lilParser	KEYWORD1
 addCmd	KEYWORD2
 addChar	KEYWORD2
 numParams	KEYWORD2
-getParamSize	KEYWORD2
-getParam	KEYWORD2
+getNextParam	KEYWORD2
 getParamBuff	KEYWORD2
-reset	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
@@ -26,3 +24,6 @@ reset	KEYWORD2
 
 PARAM_BUFF_SIZE	LITERAL1
 EOL	LITERAL1
+PARSE_ERR	LITERAL1
+CONFIG_ERR	LITERAL1
+PARAM_ERR	LITERAL1
