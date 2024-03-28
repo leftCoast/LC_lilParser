@@ -53,7 +53,7 @@ void makeDirectory(void) {
    char  pathBuff[PATH_CHARS];                     // A buffer to hold the full path to the new folder.
    
    if (ourParser.numParams()) {                    // If they typed in somethng past the command.
-      param = ourParser.getnextParam();            // We get the first parameter, assume its the new folder's name.
+      param = ourParser.getNextParam();            // We get the first parameter, assume its the new folder's name.
       strcpy(pathBuff,wd);                         // Start building up the full path. Starting with working directory.
       strcat(pathBuff,charBuff);                   // Add in the user's parameter.
       if (!SD.mkdir(pathBuff)) {                   // If we can not create the folder.
