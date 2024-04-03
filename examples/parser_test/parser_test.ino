@@ -14,9 +14,14 @@ In order to run this you will need, along with this library : LC_baseTools
 LC_baseTools can be found in in the Arduino library manager.
 
 And, of course, hardware with an SD drive. You will need the pin number of your SD's
-chip select. Other than that? 
+chip select. Other than that?
 
 Should work. I hope.
+
+NOTE : If you are using an SD card that is mounted to another piece of hardware. For
+example a display. You will probably need to initialse that hardware as well as the
+SD card. Becuase, letting an un-initialzed piece of hardware run free can really mess
+up your SPI bus. Making you wonder what's going on with the SD drive.
 
 3/2022 - We think the pandemic is finally winding down. (Fingers crossed) Rewriting
 lilParser to handle dynamic memory internally. No longer must the user deal with this. SO
@@ -24,6 +29,9 @@ DON'T GO FREEING ANY STRINGS IT HANDS YOU !
 
 Also added some description text at the beginning of this program so the user can see what
 commands she has to mess about with.
+
+3/2024 - Parser has been rewriten from scratch to be more maintainable. v 2.0 Much better!
+
 *************************************************************************************
 *************************************************************************************/
 
@@ -31,29 +39,35 @@ commands she has to mess about with.
 #include <SD.h>
 #include "lilParser.h"
 
+
 #define SD_CS        4     // SD chip select pin number. Change to suit your setup.
-#define PATH_CHARS   255   // Could be less, depending on how deep into the SD drive you look.
+#define PATH_CHARS   80		// Could be less, depending on how deep into the SD drive you look.
 
- 
-enum commands {   noCommand,  // ALWAYS start with noCommand. Or something simlar.
-                  printWD,    // The rest is up to you. help would be a good one. Have it list
-                  changeDir,  // What the other commands are, how they work and what they do.
-                  listDir,
-                  makeDir
-                  };          // Our list of commands.
+// Our list of commands.
+enum commands {   
+	noCommand,  // ALWAYS start with noCommand. Or something simlar.
+	printWD,    // The rest is up to you. help would be a good one. Have it list
+	changeDir,  // What the other commands are, how they work and what they do.
+	listDir,
+	makeDir
+};          
 
-lilParser   ourParser;        // The parser object.
-char        wd[PATH_CHARS];   // Allocate a space for the working directory.
+
+lilParser   ourParser(PATH_CHARS);		// Create the parser. We'll set up with PATH_CHARS buffer.
+char        wd[PATH_CHARS];   			// Allocate a space for the working directory.
 
 
 void setup() {
 
    strcpy(wd,"/");                     // Initialize the working directory at root.
    
+   Serial.begin(9600);                 // Bring Serial port online.
+
    if (!SD.begin(SD_CS)) {             // If we can not initialze a SD drive.
       Serial.println("No SD Drive!");  // Tell the user.
       while(1);                        // Just stop here.
    }
+   
    ourParser.addCmd(printWD,"pwd");    // Add pwd command  [ If they type "pwd" they mean printWD ]
    ourParser.addCmd(changeDir,"cd");   // Add cd command
    ourParser.addCmd(listDir,"ls");     // Add ls command
@@ -142,7 +156,7 @@ void makeDirectory(void) {
    char  pathBuff[PATH_CHARS];                     // A buffer to hold the full path to the new folder.
    
    if (ourParser.numParams()) {                    // If they typed in somethng past the command.
-      charBuff = ourParser.getParamBuff();         // We get the first parameter, assume its the new folder's name.
+      charBuff = ourParser.getNextParam();         // We get the first parameter, assume its the new folder's name.
       strcpy(pathBuff,wd);                         // Start building up the full path. Starting with working directory.
       strcat(pathBuff,charBuff);                   // Add in the user's parameter.
       if (!SD.mkdir(pathBuff)) {                   // If we can not create the folder.
@@ -163,7 +177,7 @@ void changeDirectory(void) {
    int   index;                                       // A handy index to use, messing with strings.
    
    if (ourParser.numParams()) {                       // If they typed in some parameters.
-      charBuff = ourParser.getParamBuff();            // We grab the first parameter.
+      charBuff = ourParser.getNextParam();            // We grab the first parameter.
       if (!strcmp(charBuff,"/")) {                    // If its just '/' IE, root..
          strcpy(wd,"/");                              // Give it to them and be done with it.
       } else if (!strcmp(charBuff,"..")) {            // If we need to go up a directory from wd..
